@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 class CustomLoginWithGoogle extends StatefulWidget {
-  const CustomLoginWithGoogle({super.key});
-
+  const CustomLoginWithGoogle({super.key, required this.onPressed});
+  final void Function()? onPressed;
   @override
   State<CustomLoginWithGoogle> createState() => _CustomLoginWithGoogleState();
 }
@@ -11,7 +11,7 @@ class _CustomLoginWithGoogleState extends State<CustomLoginWithGoogle> {
   @override
   Widget build(BuildContext context) {
     return MaterialButton(
-      onPressed: () {},
+      onPressed: widget.onPressed,
       color: Colors.red.shade700,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(50), // Set border radius to 50

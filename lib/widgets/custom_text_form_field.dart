@@ -6,12 +6,14 @@ class CustomTextFormField extends StatefulWidget {
   final Widget? suffixIcon;
   final void Function()? onPressed;
   final TextEditingController controller;
+  final String? Function(String?)? validator;
 
   const CustomTextFormField({
     super.key,
     required this.title,
     required this.hint,
     required this.controller,
+    required this.validator,
     this.suffixIcon,
     this.onPressed,
   });
@@ -24,6 +26,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      validator: widget.validator,
       controller: widget.controller,
       onTap: widget.onPressed ?? () {},
       decoration: InputDecoration(
