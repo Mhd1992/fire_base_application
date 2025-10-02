@@ -1,12 +1,10 @@
-import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_application/home_page/category/add_category_page.dart';
+import 'package:firebase_application/home_page/sub_category/sub_category_detail.dart';
 import 'package:firebase_application/model/sub_category_model.dart';
-import 'package:firebase_application/widgets/dialog_box.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 
-import 'add_sub_category_page.dart';
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SubCategoryPage extends StatefulWidget {
   const SubCategoryPage({super.key, this.categoryId});
@@ -20,10 +18,13 @@ class SubCategoryPage extends StatefulWidget {
 //List<QueryDocumentSnapshot> categories = [];//other methods to serialize json
 List<SubCategoryModel> subCategoryModel = [];
 
+enum DisplayType { list, grid }
+
 class _SubCategoryPageState extends State<SubCategoryPage> {
   bool isLoading = false;
+  DisplayType? type;
 
-  getData() async {
+  getSubCategoryData() async {
     print('----------\n');
     print('${widget.categoryId}');
     print('----------\n');
@@ -40,7 +41,7 @@ class _SubCategoryPageState extends State<SubCategoryPage> {
       print('------------Data\n');
       print(d.data());
       subCategoryModel.add(
-        SubCategoryModel.fromJson(d.data() as Map<String, dynamic>),
+        SubCategoryModel.fromJson(d.data() as Map<String, dynamic>, d.id),
       );
     }
 
@@ -52,21 +53,48 @@ class _SubCategoryPageState extends State<SubCategoryPage> {
   @override
   void initState() {
     // TODO: implement initState
-    getData();
+    getSubCategoryData();
+    getDisplayType();
     super.initState();
+  }
+
+  Future<void> getDisplayType() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int? savedType = prefs.getInt('displayType');
+
+    if (savedType != null) {
+      setState(() {
+        type = DisplayType.values[savedType];
+      });
+    } else {
+      // Default to list if no type is saved
+      setState(() {
+        type = DisplayType.list;
+      });
+    }
+  }
+
+  Future<void> saveDisplayType(DisplayType displayType) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('displayType', displayType.index);
   }
 
   @override
   Widget build(BuildContext context) {
-    double screenHeight = MediaQuery.of(context).size.height;
+    print('-----------\n${widget.categoryId}\n----------------');
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (context) => AddSubCategoryPage(
+              /* builder: (context) => AddSubCategoryPage(
                 title: 'AddSubCategory',
                 categoryId: widget.categoryId,
+              ),*/
+              builder: (context) => SubCategoryDetail(
+                title: 'AddNote',
+                catId: widget.categoryId,
+                type: ActionType.add,
               ),
             ),
           );
@@ -74,107 +102,129 @@ class _SubCategoryPageState extends State<SubCategoryPage> {
         backgroundColor: Colors.amber,
         child: Icon(Icons.add, color: Colors.white),
       ),
-      appBar: AppBar(title: Text('HomePage'), centerTitle: true, actions: []),
+      appBar: AppBar(
+        title: Text('SubCategoryPage'),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            onPressed: () {
+              setState(() {
+                if (type == DisplayType.list) {
+                  type = DisplayType.grid;
+                } else {
+                  type = DisplayType.list;
+                }
+                saveDisplayType(type!); // Save the selected display type
+              });
+            },
+            icon: Icon(
+              type == DisplayType.grid ? Icons.menu : Icons.grid_view_rounded,
+            ),
+          ),
+        ],
+      ),
       body: isLoading == true
           ? Center(child: CircularProgressIndicator())
-          : (!FirebaseAuth.instance.currentUser!.emailVerified)
-          ? Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Click for verify your email ',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                SizedBox(width: 16),
-                MaterialButton(
-                  onPressed: () {
-                    FirebaseAuth.instance.currentUser!
-                        .sendEmailVerification()
-                        .then((val) {
-                          if (context.mounted) {
-                            dialogBox(
-                              context,
-                              'Success please logout and login ',
-                              DialogType.success,
-                            );
-                          }
-                        })
-                        .catchError((e) {});
-                  },
-                  color: Colors.amber.shade600,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30.0),
-                  ),
-                  child: Text('Send', style: TextStyle(color: Colors.white)),
-                ),
-              ],
-            )
-          : GridView.builder(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                mainAxisExtent: screenHeight * 0.25,
-                crossAxisCount: 2,
-              ),
-              itemCount:
-                  subCategoryModel.length, // Update this if you have more items
-              itemBuilder: (BuildContext context, int index) {
-                return InkWell(
-                  onLongPress: () {
-                    dialogBox(
-                      context,
-                      'you want delete this item ',
-                      DialogType.warning,
-                      onOkPressed: () async {
-                        await FirebaseFirestore.instance
-                            .collection('categories')
-                            .doc(subCategoryModel[index].subCategoryName)
-                            .delete();
-                        await getData();
-                      },
-                    );
-                  },
+          : (type == DisplayType.grid)
+          ? buildGrid()
+          : buildList(),
+    );
+  }
 
-                  child: Stack(
-                    alignment: Alignment.topRight,
-                    children: [
-                      SizedBox(
-                        height: 200,
-                        width: double.infinity,
-                        child: Card(
-                          child: Column(
-                            children: [
-                              Text(
-                                // categories[index]['categoryName'],
-                                subCategoryModel[index].subCategoryName,
-                              ), // Adjust the text based on the index
-                            ],
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(.0),
-                        child: IconButton(
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => AddSubCategoryPage(
-                                  title: 'updateSubCategory',
-                                  categoryId: widget.categoryId,
-                                  categoryName:
-                                      subCategoryModel[index].subCategoryName,
-                                  type: ActionType.update,
-                                ),
-                              ),
-                            );
-                            //Navigator.of(context).pushNamed('addCategory');
-                          },
-                          icon: Icon(Icons.edit, color: Colors.orange),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
+  Widget buildList() {
+    return ListView.builder(
+      itemCount: subCategoryModel.length, // Update this if you have more items
+      itemBuilder: (BuildContext context, int index) {
+        return GestureDetector(
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => SubCategoryDetail(
+                  catId: widget.categoryId,
+                  noteId: subCategoryModel[index].noteId,
+                  noteContent: subCategoryModel[index].subCategoryName,
+                  type: ActionType.update,
+                ),
+              ),
+            );
+          },
+
+          child: Card(
+            child: Dismissible(
+              key: Key(subCategoryModel[index].noteId),
+              onDismissed: (direction) async {
+                await FirebaseFirestore.instance
+                    .collection('categories')
+                    .doc(widget.categoryId)
+                    .collection('notes')
+                    .doc(subCategoryModel[index].noteId)
+                    .delete();
               },
+              child: ListTile(
+                title: Text(
+                  subCategoryModel[index].subCategoryName.length > 20
+                      ? subCategoryModel[index].subCategoryName.substring(0, 20)
+                      : subCategoryModel[index].subCategoryName,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
             ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget buildGrid() {
+    double screenHeight = MediaQuery.of(context).size.height;
+
+    return GridView.builder(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        //mainAxisExtent: screenHeight * 0.1,
+        crossAxisCount: 2,
+      ),
+      itemCount: subCategoryModel.length, // Update this if you have more items
+      itemBuilder: (BuildContext context, int index) {
+        return GestureDetector(
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => SubCategoryDetail(
+                  title: 'updateNote',
+                  catId: widget.categoryId,
+                  noteId: subCategoryModel[index].noteId,
+                  noteContent: subCategoryModel[index].subCategoryName,
+                  type: ActionType.update,
+                ),
+              ),
+            );
+          },
+
+          child: Dismissible(
+            key: Key(subCategoryModel[index].noteId),
+            onDismissed: (direction) async {
+              await FirebaseFirestore.instance
+                  .collection('categories')
+                  .doc(widget.categoryId)
+                  .collection('notes')
+                  .doc(subCategoryModel[index].noteId)
+                  .delete();
+            },
+            child: Card(
+              elevation: 2,
+              child: Align(
+                alignment: Alignment.center,
+                child: Text(
+                  subCategoryModel[index].subCategoryName.length > 20
+                      ? subCategoryModel[index].subCategoryName.substring(0, 20)
+                      : subCategoryModel[index].subCategoryName,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

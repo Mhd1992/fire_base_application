@@ -45,6 +45,7 @@ dependencies:
   shared_preferences:
   firebase_storage:
   google_sign_in: ^6.3.0
+  flutter_riverpod:
   #google_sign_in: ^7.1.1
 
 
