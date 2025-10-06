@@ -7,6 +7,7 @@ import 'package:firebase_application/home_page/sub_category/add_sub_category_pag
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,7 +22,8 @@ void main() async {
 
     androidProvider: AndroidProvider.debug,
   );
-  runApp(const MyApp());
+
+  runApp(ProviderScope(child: const MyApp()));
 }
 
 class MyApp extends StatefulWidget {

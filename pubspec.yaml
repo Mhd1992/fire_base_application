@@ -46,6 +46,10 @@ dependencies:
   firebase_storage:
   google_sign_in: ^6.3.0
   flutter_riverpod:
+  riverpod:
+  flutter_bloc:
+  bloc:
+  equatable:
   #google_sign_in: ^7.1.1
 
 

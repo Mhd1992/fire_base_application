@@ -1,3 +1,4 @@
+/*
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
@@ -8,7 +9,7 @@ enum DisplayType { list, grid }
 class DisplayTypeNotifier extends StateNotifier<DisplayType> {
   DisplayTypeNotifier() : super(DisplayType.list); // Default to list
 
-  void toggleDisplayType() {
+  void toggleDispl  ayType() {
     state = state == DisplayType.list ? DisplayType.grid : DisplayType.list;
   }
 }
@@ -18,3 +19,12 @@ final displayTypeProvider =
     StateNotifierProvider<DisplayTypeNotifier, DisplayType>(
       (ref) => DisplayTypeNotifier(),
     );
+*/ /*
+
+
+import 'package:flutter_riverpod/legacy.dart';
+
+//enum DisplayItem { list, grid }
+
+final displayed = StateProvider.autoDispose((ref) => DisplayItem.list);
+*/
