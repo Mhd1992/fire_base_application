@@ -1,30 +1,66 @@
-/*
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_application/model/sub_category_model.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
-// Define the display type enumeration
+// Display type enum
 enum DisplayType { list, grid }
 
-// Create a StateNotifier to manage the display type state
-class DisplayTypeNotifier extends StateNotifier<DisplayType> {
-  DisplayTypeNotifier() : super(DisplayType.list); // Default to list
+// Display type provider
+final displayTypeProvider = StateNotifierProvider<DisplayTypeNotifier, DisplayType>(
+  (ref) => DisplayTypeNotifier(),
+);
 
-  void toggleDispl  ayType() {
+class DisplayTypeNotifier extends StateNotifier<DisplayType> {
+  DisplayTypeNotifier() : super(DisplayType.list);
+
+  void toggle() {
     state = state == DisplayType.list ? DisplayType.grid : DisplayType.list;
   }
 }
 
-// Create a provider for the DisplayTypeNotifier
-final displayTypeProvider =
-    StateNotifierProvider<DisplayTypeNotifier, DisplayType>(
-      (ref) => DisplayTypeNotifier(),
-    );
-*/ /*
+// Subcategories provider
+final subCategoriesProvider = StateNotifierProvider.autoDispose<SubCategoriesNotifier, AsyncValue<List<SubCategoryModel>>>(
+  (ref) => SubCategoriesNotifier(),
+);
 
+class SubCategoriesNotifier extends StateNotifier<AsyncValue<List<SubCategoryModel>>> {
+  SubCategoriesNotifier() : super(const AsyncValue.loading());
 
-import 'package:flutter_riverpod/legacy.dart';
+  Future<void> fetch(String? categoryId) async {
+    if (categoryId == null) {
+      state = const AsyncValue.data([]);
+      return;
+    }
+    state = const AsyncValue.loading();
+    try {
+      final data = await FirebaseFirestore.instance
+          .collection('categories')
+          .doc(categoryId)
+          .collection('notes')
+          .get();
+      final subCategories = data.docs
+          .map((doc) => SubCategoryModel.fromJson(doc.data() as Map<String, dynamic>, doc.id))
+          .toList();
+      state = AsyncValue.data(subCategories);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
 
-//enum DisplayItem { list, grid }
-
-final displayed = StateProvider.autoDispose((ref) => DisplayItem.list);
-*/
+  Future<void> delete(String? categoryId, String noteId) async {
+    if (categoryId == null) return;
+    try {
+      await FirebaseFirestore.instance
+          .collection('categories')
+          .doc(categoryId)
+          .collection('notes')
+          .doc(noteId)
+          .delete();
+      // Refresh after delete
+      await fetch(categoryId);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+}

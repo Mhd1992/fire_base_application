@@ -92,10 +92,6 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
           onPressed: () {
             Navigator.of(context).push(
               MaterialPageRoute(
-                /* builder: (context) => AddSubCategoryPage(
-                title: 'AddSubCategory',
-                categoryId: widget.categoryId,
-              ),*/
                 builder: (context) => SubCategoryDetail(
                   title: 'AddNote',
                   catId: widget.categoryId,
@@ -119,21 +115,6 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
                 return IconButton(
                   onPressed: () {
                     context.read<DisplayCubit>().toggleDisplay();
-                    // ignore: unrelated_type_equality_checks
-
-                    /*    setState(() {
-                if (type == DisplayType.list) {
-                  type = DisplayType.grid;
-                } else {
-                  print('==============\nSecond\n===============');
-                  //  setState(() {
-                  ref.read(displayed.notifier).state = DisplayItem.list;
-                  print(displayScreen);
-                  //   });
-                }
-                print(
-                  '========CURRENT VALUE IS ======\n${displayScreen}\n===============',
-                );*/
                   },
                   icon: Icon(
                     context.select<DisplayCubit, DisplayItem>(

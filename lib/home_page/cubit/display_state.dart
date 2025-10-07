@@ -7,7 +7,7 @@ enum DisplayItem { list, grid }
 class DisplayState extends Equatable {
   final DisplayItem displayItem;
 
-  DisplayState(this.displayItem);
+  const DisplayState(this.displayItem);
 
   @override
   List<Object> get props => [displayItem];
