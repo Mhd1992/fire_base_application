@@ -7,61 +7,62 @@ import 'package:flutter_riverpod/legacy.dart';
 enum DisplayType { list, grid }
 
 // Display type provider
-final displayTypeProvider = StateNotifierProvider<DisplayTypeNotifier, DisplayType>(
-  (ref) => DisplayTypeNotifier(),
+final displayTypeProvider = StateProvider.autoDispose<DisplayType>(
+  (ref) => DisplayType.list,
 );
 
-class DisplayTypeNotifier extends StateNotifier<DisplayType> {
-  DisplayTypeNotifier() : super(DisplayType.list);
+// Subcategories provider
+final subCategoriesProvider =
+    StateProvider.autoDispose<AsyncValue<List<SubCategoryModel>>>(
+      (ref) => const AsyncValue.loading(),
+    );
 
-  void toggle() {
-    state = state == DisplayType.list ? DisplayType.grid : DisplayType.list;
+// Fetch subcategories function
+Future<void> fetchSubCategories(WidgetRef ref, String? categoryId) async {
+  if (categoryId == null) {
+    ref.read(subCategoriesProvider.notifier).state = const AsyncValue.data([]);
+    return;
+  }
+  ref.read(subCategoriesProvider.notifier).state = const AsyncValue.loading();
+  try {
+    final data = await FirebaseFirestore.instance
+        .collection('categories')
+        .doc(categoryId)
+        .collection('notes')
+        .get();
+    final subCategories = data.docs
+        .map(
+          (doc) => SubCategoryModel.fromJson(
+            doc.data() as Map<String, dynamic>,
+            doc.id,
+          ),
+        )
+        .toList();
+    ref.read(subCategoriesProvider.notifier).state = AsyncValue.data(
+      subCategories,
+    );
+  } catch (e, st) {
+    ref.read(subCategoriesProvider.notifier).state = AsyncValue.error(e, st);
   }
 }
 
-// Subcategories provider
-final subCategoriesProvider = StateNotifierProvider.autoDispose<SubCategoriesNotifier, AsyncValue<List<SubCategoryModel>>>(
-  
-  (ref) => SubCategoriesNotifier(),
-);
-
-class SubCategoriesNotifier extends StateNotifier<AsyncValue<List<SubCategoryModel>>> {
-  SubCategoriesNotifier() : super(const AsyncValue.loading());
-
-  Future<void> fetch(String? categoryId) async {
-    if (categoryId == null) {
-      state = const AsyncValue.data([]);
-      return;
-    }
-    state = const AsyncValue.loading();
-    try {
-      final data = await FirebaseFirestore.instance
-          .collection('categories')
-          .doc(categoryId)
-          .collection('notes')
-          .get();
-      final subCategories = data.docs
-          .map((doc) => SubCategoryModel.fromJson(doc.data() as Map<String, dynamic>, doc.id))
-          .toList();
-      state = AsyncValue.data(subCategories);
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-    }
-  }
-
-  Future<void> delete(String? categoryId, String noteId) async {
-    if (categoryId == null) return;
-    try {
-      await FirebaseFirestore.instance
-          .collection('categories')
-          .doc(categoryId)
-          .collection('notes')
-          .doc(noteId)
-          .delete();
-      // Refresh after delete
-      await fetch(categoryId);
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-    }
+// Delete subcategory function
+Future<void> deleteSubCategory(
+  WidgetRef ref,
+  String? categoryId,
+  String noteId,
+) async {
+  if (categoryId == null) return;
+  try {
+    await FirebaseFirestore.instance
+        .collection('categories')
+        .doc(categoryId)
+        .collection('notes')
+        .doc(noteId)
+        .delete();
+    // Refresh after delete
+    await fetchSubCategories(ref, categoryId);
+  } catch (e, st) {
+    ref.read(subCategoriesProvider.notifier).state = AsyncValue.error(e, st);
   }
 }

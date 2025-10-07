@@ -101,7 +101,10 @@ class _SubCategoryDetailState extends State<SubCategoryDetail> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        title: Text(widget.title ?? 'Add Note'),
+        centerTitle: true,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(32.0),
         child: Column(

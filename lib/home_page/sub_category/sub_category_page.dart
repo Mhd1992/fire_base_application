@@ -1,12 +1,13 @@
-import 'package:firebase_application/home_page/category/add_category_page.dart';
-import 'package:firebase_application/provider/display_type_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:firebase_application/home_page/sub_category/sub_category_detail.dart';
+import 'package:firebase_application/provider/display_type_provider.dart';
+
+import '../category/add_category_page.dart';
 
 class SubCategoryPage extends ConsumerStatefulWidget {
   const SubCategoryPage({super.key, this.categoryId});
+
   final String? categoryId;
 
   @override
@@ -17,9 +18,7 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() =>
-      ref.read(subCategoriesProvider.notifier).fetch(widget.categoryId)
-    );
+    Future.microtask(() => fetchSubCategories(ref, widget.categoryId));
   }
 
   @override
@@ -29,44 +28,50 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => SubCategoryDetail(
-                title: 'AddNote',
-                catId: widget.categoryId,
-                type: ActionType.add,
-              ),
-            ),
-          );
-          ref.read(subCategoriesProvider.notifier).fetch(widget.categoryId);
+        onPressed: () {
+          Navigator.of(context)
+              .push(
+                MaterialPageRoute(
+                  builder: (context) => SubCategoryDetail(
+                    title: 'Add Subcategory',
+                    catId: widget.categoryId,
+                    type: ActionType.add,
+                  ),
+                ),
+              )
+              .then((_) {
+                fetchSubCategories(ref, widget.categoryId);
+              });
         },
         backgroundColor: Colors.amber,
         child: const Icon(Icons.add, color: Colors.white),
       ),
+
       appBar: AppBar(
-        title: const Text('SubCategoryPage'),
-        centerTitle: true,
+        title: const Text('Subcategories'),
         actions: [
           IconButton(
-            onPressed: () => ref.read(displayTypeProvider.notifier).toggle(),
             icon: Icon(
-              displayType == DisplayType.grid ? Icons.menu : Icons.grid_view_rounded,
+              displayType == DisplayType.list ? Icons.grid_view : Icons.list,
             ),
+            onPressed: () {
+              ref
+                  .read(displayTypeProvider.notifier)
+                  .state = displayType == DisplayType.list
+                  ? DisplayType.grid
+                  : DisplayType.list;
+            },
           ),
         ],
       ),
       body: subCategoriesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Error: $err')),
         data: (subCategories) {
-          if (subCategories.isEmpty) {
-            return const Center(child: Text('No subcategories found.'));
-          }
-          return displayType == DisplayType.grid
-              ? _buildGrid(subCategories)
-              : _buildList(subCategories);
+          return displayType == DisplayType.list
+              ? _buildList(subCategories)
+              : _buildGrid(subCategories);
         },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(child: Text('Error: $error')),
       ),
     );
   }
@@ -76,41 +81,24 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
       itemCount: subCategories.length,
       itemBuilder: (context, index) {
         final subCategory = subCategories[index];
-        return GestureDetector(
-          onTap: () async {
-            await Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => SubCategoryDetail(
-                  catId: widget.categoryId,
-                  noteId: subCategory.noteId,
-                  noteContent: subCategory.subCategoryName,
-                  type: ActionType.update,
+        return Card(
+          elevation: 4,
+          child: ListTile(
+            title: Text(subCategory.subCategoryName),
+            onTap: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => SubCategoryDetail(
+                    title: 'Edit Subcategory',
+                    catId: widget.categoryId,
+                    noteId: subCategory.noteId,
+                    noteContent: subCategory.subCategoryName,
+                    type: ActionType.update,
+                  ),
                 ),
-              ),
-            );
-            ref.read(subCategoriesProvider.notifier).fetch(widget.categoryId);
-          },
-          child: Card(
-            child: Dismissible(
-              key: Key(subCategory.noteId),
-              direction: DismissDirection.endToStart,
-              onDismissed: (_) =>
-                  ref.read(subCategoriesProvider.notifier).delete(widget.categoryId, subCategory.noteId),
-              background: Container(
-                color: Colors.red,
-                alignment: Alignment.centerRight,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: const Icon(Icons.delete, color: Colors.white),
-              ),
-              child: ListTile(
-                title: Text(
-                  subCategory.subCategoryName.length > 20
-                      ? '${subCategory.subCategoryName.substring(0, 20)}...'
-                      : subCategory.subCategoryName,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
+              );
+              fetchSubCategories(ref, widget.categoryId);
+            },
           ),
         );
       },
@@ -119,7 +107,9 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
 
   Widget _buildGrid(List subCategories) {
     return GridView.builder(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+      ),
       itemCount: subCategories.length,
       itemBuilder: (context, index) {
         final subCategory = subCategories[index];
@@ -128,7 +118,6 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
             await Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (context) => SubCategoryDetail(
-                  title: 'updateNote',
                   catId: widget.categoryId,
                   noteId: subCategory.noteId,
                   noteContent: subCategory.subCategoryName,
@@ -136,13 +125,13 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
                 ),
               ),
             );
-            ref.read(subCategoriesProvider.notifier).fetch(widget.categoryId);
+            fetchSubCategories(ref, widget.categoryId);
           },
           child: Dismissible(
             key: Key(subCategory.noteId),
             direction: DismissDirection.endToStart,
             onDismissed: (_) =>
-                ref.read(subCategoriesProvider.notifier).delete(widget.categoryId, subCategory.noteId),
+                deleteSubCategory(ref, widget.categoryId, subCategory.noteId),
             background: Container(
               color: Colors.red,
               alignment: Alignment.centerRight,
@@ -156,7 +145,10 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
                   subCategory.subCategoryName.length > 20
                       ? '${subCategory.subCategoryName.substring(0, 20)}...'
                       : subCategory.subCategoryName,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
