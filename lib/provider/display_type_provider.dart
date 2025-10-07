@@ -7,8 +7,15 @@ import 'package:flutter_riverpod/legacy.dart';
 enum DisplayType { list, grid }
 
 // Display type provider
-final displayTypeProvider = StateNotifierProvider<DisplayTypeNotifier, DisplayType>(
-  (ref) => DisplayTypeNotifier(),
+/*
+final displayTypeProvider =
+    StateNotifierProvider<DisplayTypeNotifier, DisplayType>(
+      (ref) => DisplayTypeNotifier(),
+    );
+*/
+
+final displayTypeProvider1 = StateProvider.autoDispose(
+  (ref) => DisplayType.list,
 );
 
 class DisplayTypeNotifier extends StateNotifier<DisplayType> {
@@ -20,12 +27,14 @@ class DisplayTypeNotifier extends StateNotifier<DisplayType> {
 }
 
 // Subcategories provider
-final subCategoriesProvider = StateNotifierProvider.autoDispose<SubCategoriesNotifier, AsyncValue<List<SubCategoryModel>>>(
-  
-  (ref) => SubCategoriesNotifier(),
-);
+final subCategoriesProvider =
+    StateNotifierProvider.autoDispose<
+      SubCategoriesNotifier,
+      AsyncValue<List<SubCategoryModel>>
+    >((ref) => SubCategoriesNotifier());
 
-class SubCategoriesNotifier extends StateNotifier<AsyncValue<List<SubCategoryModel>>> {
+class SubCategoriesNotifier
+    extends StateNotifier<AsyncValue<List<SubCategoryModel>>> {
   SubCategoriesNotifier() : super(const AsyncValue.loading());
 
   Future<void> fetch(String? categoryId) async {
@@ -41,7 +50,12 @@ class SubCategoriesNotifier extends StateNotifier<AsyncValue<List<SubCategoryMod
           .collection('notes')
           .get();
       final subCategories = data.docs
-          .map((doc) => SubCategoryModel.fromJson(doc.data() as Map<String, dynamic>, doc.id))
+          .map(
+            (doc) => SubCategoryModel.fromJson(
+              doc.data() as Map<String, dynamic>,
+              doc.id,
+            ),
+          )
           .toList();
       state = AsyncValue.data(subCategories);
     } catch (e, st) {

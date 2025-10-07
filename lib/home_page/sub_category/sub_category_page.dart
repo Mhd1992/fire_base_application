@@ -17,14 +17,15 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() =>
-      ref.read(subCategoriesProvider.notifier).fetch(widget.categoryId)
+    Future.microtask(
+      () => ref.read(subCategoriesProvider.notifier).fetch(widget.categoryId),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final displayType = ref.watch(displayTypeProvider);
+    final displayType1 = ref.watch(displayTypeProvider1);
+    //final displayType1 = ref.watch(displayTypeProvider);
     final subCategoriesAsync = ref.watch(subCategoriesProvider);
 
     return Scaffold(
@@ -49,9 +50,18 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
         centerTitle: true,
         actions: [
           IconButton(
-            onPressed: () => ref.read(displayTypeProvider.notifier).toggle(),
+            // onPressed: () => ref.read(displayTypeProvider.notifier).toggle(), ///in this case using Provider.StateNotifier instead of StateProvider.
+            onPressed: () {
+              ref
+                  .read(displayTypeProvider1.notifier)
+                  .state = displayType1 == DisplayType.list
+                  ? DisplayType.grid
+                  : DisplayType.list;
+            },
             icon: Icon(
-              displayType == DisplayType.grid ? Icons.menu : Icons.grid_view_rounded,
+              displayType1 == DisplayType.grid
+                  ? Icons.menu
+                  : Icons.grid_view_rounded,
             ),
           ),
         ],
@@ -63,7 +73,7 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
           if (subCategories.isEmpty) {
             return const Center(child: Text('No subcategories found.'));
           }
-          return displayType == DisplayType.grid
+          return displayType1 == DisplayType.grid
               ? _buildGrid(subCategories)
               : _buildList(subCategories);
         },
@@ -94,8 +104,9 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
             child: Dismissible(
               key: Key(subCategory.noteId),
               direction: DismissDirection.endToStart,
-              onDismissed: (_) =>
-                  ref.read(subCategoriesProvider.notifier).delete(widget.categoryId, subCategory.noteId),
+              onDismissed: (_) => ref
+                  .read(subCategoriesProvider.notifier)
+                  .delete(widget.categoryId, subCategory.noteId),
               background: Container(
                 color: Colors.red,
                 alignment: Alignment.centerRight,
@@ -107,7 +118,10 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
                   subCategory.subCategoryName.length > 20
                       ? '${subCategory.subCategoryName.substring(0, 20)}...'
                       : subCategory.subCategoryName,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -119,7 +133,9 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
 
   Widget _buildGrid(List subCategories) {
     return GridView.builder(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+      ),
       itemCount: subCategories.length,
       itemBuilder: (context, index) {
         final subCategory = subCategories[index];
@@ -141,8 +157,9 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
           child: Dismissible(
             key: Key(subCategory.noteId),
             direction: DismissDirection.endToStart,
-            onDismissed: (_) =>
-                ref.read(subCategoriesProvider.notifier).delete(widget.categoryId, subCategory.noteId),
+            onDismissed: (_) => ref
+                .read(subCategoriesProvider.notifier)
+                .delete(widget.categoryId, subCategory.noteId),
             background: Container(
               color: Colors.red,
               alignment: Alignment.centerRight,
@@ -156,7 +173,10 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
                   subCategory.subCategoryName.length > 20
                       ? '${subCategory.subCategoryName.substring(0, 20)}...'
                       : subCategory.subCategoryName,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
