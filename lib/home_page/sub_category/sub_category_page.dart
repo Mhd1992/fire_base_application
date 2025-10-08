@@ -1,5 +1,5 @@
 import 'package:firebase_application/home_page/category/add_category_page.dart';
-import 'package:firebase_application/provider/display_type_provider.dart';
+import 'package:firebase_application/provider/display_type_notirfier_Provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -17,15 +17,17 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() =>
-      ref.read(subCategoriesProvider.notifier).fetch(widget.categoryId)
+    Future.microtask(
+      () => ref
+          .read(subCategoriesNotifierProvider.notifier)
+          .fetch(widget.categoryId),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final displayType = ref.watch(displayTypeProvider);
-    final subCategoriesAsync = ref.watch(subCategoriesProvider);
+    final displayType = ref.watch(displayTypeNotifierProvider);
+    final subCategoriesAsync = ref.watch(subCategoriesNotifierProvider);
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(
@@ -39,7 +41,9 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
               ),
             ),
           );
-          ref.read(subCategoriesProvider.notifier).fetch(widget.categoryId);
+          ref
+              .read(subCategoriesNotifierProvider.notifier)
+              .fetch(widget.categoryId);
         },
         backgroundColor: Colors.amber,
         child: const Icon(Icons.add, color: Colors.white),
@@ -49,9 +53,12 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
         centerTitle: true,
         actions: [
           IconButton(
-            onPressed: () => ref.read(displayTypeProvider.notifier).toggle(),
+            onPressed: () =>
+                ref.read(displayTypeNotifierProvider.notifier).toggle(),
             icon: Icon(
-              displayType == DisplayType.grid ? Icons.menu : Icons.grid_view_rounded,
+              displayType == DisplayType.grid
+                  ? Icons.menu
+                  : Icons.grid_view_rounded,
             ),
           ),
         ],
@@ -88,14 +95,17 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
                 ),
               ),
             );
-            ref.read(subCategoriesProvider.notifier).fetch(widget.categoryId);
+            ref
+                .read(subCategoriesNotifierProvider.notifier)
+                .fetch(widget.categoryId);
           },
           child: Card(
             child: Dismissible(
               key: Key(subCategory.noteId),
               direction: DismissDirection.endToStart,
-              onDismissed: (_) =>
-                  ref.read(subCategoriesProvider.notifier).delete(widget.categoryId, subCategory.noteId),
+              onDismissed: (_) => ref
+                  .read(subCategoriesNotifierProvider.notifier)
+                  .delete(widget.categoryId, subCategory.noteId),
               background: Container(
                 color: Colors.red,
                 alignment: Alignment.centerRight,
@@ -107,7 +117,10 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
                   subCategory.subCategoryName.length > 20
                       ? '${subCategory.subCategoryName.substring(0, 20)}...'
                       : subCategory.subCategoryName,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -119,7 +132,9 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
 
   Widget _buildGrid(List subCategories) {
     return GridView.builder(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+      ),
       itemCount: subCategories.length,
       itemBuilder: (context, index) {
         final subCategory = subCategories[index];
@@ -136,13 +151,16 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
                 ),
               ),
             );
-            ref.read(subCategoriesProvider.notifier).fetch(widget.categoryId);
+            ref
+                .read(subCategoriesNotifierProvider.notifier)
+                .fetch(widget.categoryId);
           },
           child: Dismissible(
             key: Key(subCategory.noteId),
             direction: DismissDirection.endToStart,
-            onDismissed: (_) =>
-                ref.read(subCategoriesProvider.notifier).delete(widget.categoryId, subCategory.noteId),
+            onDismissed: (_) => ref
+                .read(subCategoriesNotifierProvider.notifier)
+                .delete(widget.categoryId, subCategory.noteId),
             background: Container(
               color: Colors.red,
               alignment: Alignment.centerRight,
@@ -156,7 +174,10 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
                   subCategory.subCategoryName.length > 20
                       ? '${subCategory.subCategoryName.substring(0, 20)}...'
                       : subCategory.subCategoryName,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),

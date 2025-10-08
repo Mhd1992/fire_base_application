@@ -1,4 +1,3 @@
-/*
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_application/model/sub_category_model.dart';
@@ -8,9 +7,10 @@ import 'package:flutter_riverpod/legacy.dart';
 enum DisplayType { list, grid }
 
 // Display type provider
-final displayTypeProvider = StateNotifierProvider<DisplayTypeNotifier, DisplayType>(
-  (ref) => DisplayTypeNotifier(),
-);
+final displayTypeNotifierProvider =
+    StateNotifierProvider<DisplayTypeNotifier, DisplayType>(
+      (ref) => DisplayTypeNotifier(),
+    );
 
 class DisplayTypeNotifier extends StateNotifier<DisplayType> {
   DisplayTypeNotifier() : super(DisplayType.list);
@@ -21,12 +21,14 @@ class DisplayTypeNotifier extends StateNotifier<DisplayType> {
 }
 
 // Subcategories provider
-final subCategoriesProvider = StateNotifierProvider.autoDispose<SubCategoriesNotifier, AsyncValue<List<SubCategoryModel>>>(
-  
-  (ref) => SubCategoriesNotifier(),
-);
+final subCategoriesNotifierProvider =
+    StateNotifierProvider.autoDispose<
+      SubCategoriesNotifier,
+      AsyncValue<List<SubCategoryModel>>
+    >((ref) => SubCategoriesNotifier());
 
-class SubCategoriesNotifier extends StateNotifier<AsyncValue<List<SubCategoryModel>>> {
+class SubCategoriesNotifier
+    extends StateNotifier<AsyncValue<List<SubCategoryModel>>> {
   SubCategoriesNotifier() : super(const AsyncValue.loading());
 
   Future<void> fetch(String? categoryId) async {
@@ -42,7 +44,12 @@ class SubCategoriesNotifier extends StateNotifier<AsyncValue<List<SubCategoryMod
           .collection('notes')
           .get();
       final subCategories = data.docs
-          .map((doc) => SubCategoryModel.fromJson(doc.data() as Map<String, dynamic>, doc.id))
+          .map(
+            (doc) => SubCategoryModel.fromJson(
+              doc.data() as Map<String, dynamic>,
+              doc.id,
+            ),
+          )
           .toList();
       state = AsyncValue.data(subCategories);
     } catch (e, st) {
@@ -65,4 +72,4 @@ class SubCategoriesNotifier extends StateNotifier<AsyncValue<List<SubCategoryMod
       state = AsyncValue.error(e, st);
     }
   }
-}*/
+}
