@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_application/home_page/sub_category/sub_category_detail.dart';
-import 'package:firebase_application/provider/display_type_provider.dart';
 
+import '../../provider/sub_category_state_provider.dart';
 import '../category/add_category_page.dart';
 
 class SubCategoryPage extends ConsumerStatefulWidget {
@@ -18,13 +18,15 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => fetchSubCategories(ref, widget.categoryId));
+    Future.microtask(
+      () => stateProviderFetchSubCategories(ref, widget.categoryId),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final displayType = ref.watch(displayTypeProvider);
-    final subCategoriesAsync = ref.watch(subCategoriesProvider);
+    final displayType = ref.watch(displayTypeStateProvider);
+    final subCategoriesAsync = ref.watch(subCategoriesStateProvider);
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(
@@ -40,7 +42,7 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
                 ),
               )
               .then((_) {
-                fetchSubCategories(ref, widget.categoryId);
+                stateProviderFetchSubCategories(ref, widget.categoryId);
               });
         },
         backgroundColor: Colors.amber,
@@ -56,7 +58,7 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
             ),
             onPressed: () {
               ref
-                  .read(displayTypeProvider.notifier)
+                  .read(displayTypeStateProvider.notifier)
                   .state = displayType == DisplayType.list
                   ? DisplayType.grid
                   : DisplayType.list;
@@ -84,7 +86,11 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
         return Card(
           elevation: 4,
           child: ListTile(
-            title: Text(subCategory.subCategoryName),
+            title: Text(
+              subCategory.subCategoryName.length > 20
+                  ? '${subCategory.subCategoryName.substring(0, 20)}...'
+                  : subCategory.subCategoryName,
+            ),
             onTap: () async {
               await Navigator.of(context).push(
                 MaterialPageRoute(
@@ -97,7 +103,7 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
                   ),
                 ),
               );
-              fetchSubCategories(ref, widget.categoryId);
+              stateProviderFetchSubCategories(ref, widget.categoryId);
             },
           ),
         );
@@ -125,13 +131,16 @@ class _SubCategoryPageState extends ConsumerState<SubCategoryPage> {
                 ),
               ),
             );
-            fetchSubCategories(ref, widget.categoryId);
+            stateProviderFetchSubCategories(ref, widget.categoryId);
           },
           child: Dismissible(
             key: Key(subCategory.noteId),
             direction: DismissDirection.endToStart,
-            onDismissed: (_) =>
-                deleteSubCategory(ref, widget.categoryId, subCategory.noteId),
+            onDismissed: (_) => stateProviderDeleteSubCategory(
+              ref,
+              widget.categoryId,
+              subCategory.noteId,
+            ),
             background: Container(
               color: Colors.red,
               alignment: Alignment.centerRight,
